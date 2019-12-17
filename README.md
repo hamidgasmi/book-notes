@@ -186,7 +186,8 @@ By Artur Ejsmont, 2005
         - 3rd-party services: 
             - They are put outside of our system boundary 
             - They should be isolated by wrapping them in a layer of indirection (a good way to minimize the risk and our dependency on their availability)
-    - ![Figure 1-10 High-level overview of the data center infrastructure](https://s3-us-west-2.amazonaws.com/hamidgasmi.com/Books/WebScalabilityforStartupEngineers/1-CoreConcepts-01.png)
+    - Figure 1-10 High-level overview of the data center infrastructure:
+        - ![Figure 1-10 High-level overview of the data center infrastructure](https://s3-us-west-2.amazonaws.com/hamidgasmi.com/Books/WebScalabilityforStartupEngineers/1-CoreConcepts-01.png)
 
 </details>
 
