@@ -1,4 +1,4 @@
-# Books Notes
+# Books Notes:
 ## 1. Write Great Code, Volume 1:
 By Randall Hyde, 2004
 
@@ -193,6 +193,170 @@ By Artur Ejsmont, 2005
 
 <details>
 <summary>2. Principles of Good Software Design</summary>
+
+- Simplicity: Keep thing simple but no simpler
+- Hide Complexity and Build Abstraction 
+    - Local simplicity is achieved by ensuring that you can look at any single class/module/application and quickly understand what its purpose is and how it works 
+        - When we look at a class:
+            - We should be able to quickly understand how it works without knowing all the details of how other remote parts of the system work
+            - We should only have to comprehend the class at hand to fully understand its behavior 
+        - When we look at a module, 
+            - We should be able to disregard the methods and think of the module as a set of classes 
+        - When we look at an application, 
+            - We should be able to identify key modules and their higher-level functions, 
+            - but without the need to know the classes’ details 
+        - When we look at a System, 
+            - We should be able to see only our top level applications and identify their responsibilities 
+            - without having to care about how they fulfill them 
+    - At module level: No class should depend on more than few other interfaces or classes 
+    - Avoid over engineering: 
+        - This means building a solution that is much more complex than is really necessary
+        - When we try to predict every possible use case and every edge case, we lose focus on the most common use cases
+        - Good design allows you to add details and features later. 
+        - Build iteratively. 
+    - Test-Driven Development: 
+        - Write tests first then implement the actual functionality. 
+        - Since we write tests first, we wouldn’t add unnecessary functionality as it would require us to write tests for it as well. 
+        - This allow us to focus on the output first (in other words the clients needs) before jumping on the solution. 
+        - Models of Simplicity in Software Design: 
+            - Grails, Hadoop and Google Maps API are a few models of simplicity (great places for further study). 
+            - Grails: Read Grails in Action and Spring Recipes 
+            - Hadoop: (mapReduce paradigm, Hadoop platform). Open source.  
+            - To read: MapReduce white paper and Hadoop in Action. 
+- Loose Coupling: to keep coupling between parts of our system as low as necessary  
+    - Avoiding unnecessary coupling by generating public getters/setters: never do it 
+        - Make them protected/public only when it is really necessary 
+        - Hide as much as we can and expose as little as possible 
+    - Avoiding unnecessary coupling: 
+        - When clients of a module/class need to invoke methods in a particular order for the work to be done correctly 
+        - Often it's caused by bad api design, such as the existence of initialization functions 
+        - Clients of modules/classes shouldn’t have to know how you expect them to use our code 
+    - Avoiding unnecessary coupling by avoiding circular dependencies between layers of the same application/modules/classes 
+    - A diagram of a well-designed module should look more like a tree (directed a cyclic graph) rather than a social network graph 
+    - E.g. of loose coupling: the design of Unix command-line programs and their use of pipes
+    - E.g. of loose coupling: Simple Logging Facade for Java (SLF4J). 
+        - To check it’s structure and to compare to Log4J and Java Logging API 
+    - Books to read regarding loose coupling: 1,2,10,12,14,22,27,31 
+    - DRY - Don’t Repeat yourself: 
+        - Avoid reimplementing functions that exists: hashing functions, sorting, b-trees, model view controller (MVC) frameworks, database abstraction layers. 
+        - Use libraries/tools/frameworks that do exist. Start 1st by searching online if there are any open-source alternative available out there. 
+        - Use Design Patterns. Books: 1, 7,10,36,1 
+        - Create web services to avoid duplicating a functionality into each application. 
+    - Coding to Contract or coding to interface: 
+        - By creating explicit contracts, we extract the thing that clients are allowed to see and depend upon. 
+        - For methods, the contract is their signature. 
+        - For classes, the contract is the public interface of the class: all accessible method and their signatures. 
+        - For modules, the contract includes all the publicly available classes/interfaces and their public method signatures. 
+        - For applications, the contract means some form of a web service API specification. 
+        - We should depend on the contracts instead of implementation whenever we can. 
+        - Interfaces should only depend on other interfaces and never on concrete classes. 
+        - Classes should depend on interfaces as much as possible. 
+    - Draw Diagrams: 
+        - Use case, class diagram, module diagrams. 
+        - UML books: 1,7,10 
+        - Tool: Cloud based too: draw.io 
+- Single Responsibility: 
+    - Classes should have one single responsibility and no more. 
+    - This will let our module/application/system decoupled and makes easy our unit tests.  
+    - Guidelines: If a class breaks any of the guidelines below, it is a good indicator that we may need to revisit and potentially refactor it. 
+    - Class Length: Keep a class length below 2 to 4 screens of code. 
+    - Dependency: Ensure that our class depend on no more than 5 other interfaces/classes 
+    - Ensure that a class has a specific goal/purpose. 
+    - Class Comment: 
+        - Summarize the responsibility of the class in a single sentence
+        - Put it in a comment on top of the class name 
+        - If we find it hard to summarize the class responsibility, it usually means that our class does more than one thing 
+    - On the higher level, module or application we should 
+        - limit the scope of each of them 
+        - Isolate them from the rest of the system by using an explicit interface (a web service, for example). 
+        - summarize its responsibility in 1 or 2 sentences 
+    - Helpful Concepts: 
+        - Design Patterns as strategy, iterator, proxy and adapter (books: 5, 7) 
+        - Domaine-driven design (book: 2) 
+        - Good software design books (1, 3, 7)
+- Open-Closed Principle: 
+    - It stands for "open for extension and closed for modification". 
+    - It "... Maximizes the number of decisions not made." - Robert Martin
+    - It allows us to leave more options available and delay decisions about the details. 
+    - It reduces the need to change existing code. 
+    - We should make the code flexible: Generic types, Interfaces, Comparators
+- Dependency Injection: 
+    - It provides references to objects that the class depends on, instead of allowing the class to gather the dependencies itself 
+    - It is about knowing as little as possible: 
+        - It allows classes to "not know" how their dependencies are assembled, 
+        - Where they come from, or what actual implementation are fulfilling their contracts 
+    - It can be summarized as:
+        - Not using the "new" keyword in our classes and 
+        - Demanding instances of our dependencies to be provided to our class by its clients. 
+        - We could use a constructor-based dependency injection. 
+    - It is limited to object created and assembly of its dependencies. 
+    - E.g., Java Spring framework or Grails framework. 
+- Inversion of Control (IOC): 
+    - It is a broad principle that includes Dependency Injection principle.  
+    - It is a method of removing responsibilities of a class to make it simpler and less coupler to the rest of the system. 
+    - It is not having to know who will create and use your objects, how, or when. 
+    - Instead of us being in control of creating instances of our objects and invoking methods, 
+    - We become the creator of plugins or extensions to the framework. 
+    - IOC will look at the web request and figure out which classes should be instantiated and which components should be delegated to
+    - E.g., Spring, Symfony, Rails, Java EE containers. 
+    - Components of a good IOC framework include the following: 
+        - We can create plugins for our framework. 
+        - Each plugin is independent and can be added or removed at any time. 
+        - Our framework can auto-detect these plugins, or there is a way of configuring which plugin should be used and how. 
+        - Our framework defines the interface for each plugin type and it isn't coupled to plugins themselves. 
+- Designing for Scale: 
+    - It comes with costs: 
+        - 90% of startups fail; 
+        - 9% succeed moderately and have limited scalability need; 
+        - < 1% of them ever grow to the size that requires horizontal scalability 
+    - Do not overengineer by preparing for scale that we will never use
+    - Estimate first carefully the most realistic scalability needs of our system and design accordingly
+    - Could be broken down to 3 basic design techniques: 
+        - Adding more clones: adding indistinguishable components. 
+        - Functional partitioning: dividing the system into smaller subsystem based on functionality. 
+        - Data partitioning: keeping a subset of the data on each machine. 
+- Adding More Clones: 
+    - It is the easiest and most common scaling strategy. 
+    - It is design our application in a way that would allow to scale by simply adding more clones (an copy of a component or a server). 
+    - It is to be able to send each request to a random clone and get a correct result. 
+    - Pay attention to where you keep the application state and how we propagate state changes among our clones. 
+        - It works best for stateless services: it doesn't depend on the local state of the server so processing the request doesn't affect the way the service behaves).
+        - Not stateless services are also using this technique. It is challenging though because we need to find ways to synchronize (by using replication for example) all clones and make them interchangeable. 
+    - Adding more Web Servers Clones: 
+        - It is to distribute the load equally among the all web servers. 
+        - It is done by a load balancer. 
+- Functional Partitioning: 
+    - It is about creating subsystems out of different parts of our system. 
+    - From infrastructure perspective, functional partitioning is the isolation of different server roles. 
+    - We divide our data centers into different server types: object cache servers, message queue servers, queue workers, web servers, data store engines, and load balancers. 
+    - It is the key practices of SOA architecture. 
+    - Our services could share underlying infrastructure (data store servers, for example) or they could be hosted separately. By giving our services more autonomy, we promote coding to contract and allow each service to make independent decisions as to what components are required and what the best way to scale them out is. 
+- Data partitioning: 
+    - It is to partition the data to keep subsets of it on each machine instead of cloning the entire data set onto each machine. 
+    - It is the most complex and expensive technique because we need to be able to locate the partition on which the data lives before sending queries to the servers and that queries spanning multiple partitions may become very inefficient and difficult to implement. 
+    - Share-nothing principle:  
+        - each server has its own subset of data, which it can control independently. 
+        - Each node (server) is autonomous and propagation (replication) and locking aren't needed. 
+- Design for Self-Healing (Availability, monitoring): 
+    - It is designing software for high availability and self-healing. 
+    - A system is considered available as long as it performs its functions as expected from the client's perspective. 
+    - It doesn't matter if the system is experiencing internal partial failure as long as it does not affect the behavior that clients depend on. 
+    - Systems are measured in the "numbers of nines":  
+        - A system with availability of 2 nines is available 99% of the time (3.5 days of outage per year). 
+        - A system with availability of 5 nines is available 99.999% of the time (5 minutes of outage per year). 
+    - Failure must be considered a norm, not a special condition (hope for the best but prepare for the worst): with 1000 servers can easily give us a few failing servers every single day. There're other reason for failure such as power outages, network failures (timeouts for example) and human errors. 
+    - E.g.:  
+        - Netflix's Chaos Monkey. Netflix decided that the best way to prove that the system can handle failures is to actually cause them on an ongoing basis and observe how the system responds. 
+        - Crash-Only concept: the system should always be ready to crash, and whenever it reboots, it should be able to continue to work without human interaction (CouchDB implement this concept and doesn't even provide any shutdown functionality: if you want to stop a CouchDB instance, you just have to terminate it). 
+    - In practice, it is mainly about removing single points of failure and graceful failover. 
+        - Single point of failure is any piece of infrastructure that is necessary for the system to work properly. 
+        - E.g., DNS server (Domain Name System) if we have only one; database master server; file store server. 
+        - Solution 1: Redundancy (if it is a good investment): is having more than one copy of each piece of data or each component of the infrastructure. 
+        - Solution 2: without a redundancy, special attention + prepare a disaster recovery plan (business continuity plan) for all pieces of infrastructures. 
+    - Self-Healing example: it is about minimizing the mean time to recovery and automating the repair process. An example is: Cassandra. 
+        - Mean time to recovery is the key component of the availability equation. Mean time to failure / (mean time to failure + mean time to recovery) 
+        - So if you can't control mean time to failure (if you're using cloud infrastructure for example), we need to focus on mean time to recovery. In fact, Cloud hosting services like AWS use cheaper hardware, trading low failure rates for low price.
+
 </details>
 
 <details>
