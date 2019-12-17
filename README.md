@@ -1,10 +1,11 @@
 # Books' Notes
-## 1. Write Great Code, Volume 1
-by Randall Hyde, 2004
+## 1. Write Great Code, Volume 1:
+By Randall Hyde, 2004
 
 <details>
 <summary>1. What You Need to Know to Write Great Code</summary>
 </details>
+
 <details>
 <summary>2. Numeric Presentation</summary>
 
@@ -89,3 +90,157 @@ by Randall Hyde, 2004
 
 </details>
 
+## 2. Web Scalability for Startup Engineers:
+Tips and Technics for Scaling your Web Application
+By Artur Ejsmont, 2005
+
+<details>
+<summary>1. Core Concepts</summary>
+
+ 
+- Most scalability issues can be boiled down to just few measurements: 
+    - Handling more data. 
+    - Handling higher concurrency levels 
+    - Handling higher interaction rate. 
+- Vertical Scalability: 
+    - Adding more I/O capacity by adding more hard drives in Redundant Array of Independent Disks (RAID) arrays 
+    - I/O throughput and disk saturation are the main bottlenecks in database servers 
+    - Adding more derived and setting up a RAID array can help to distribute reads and write across more devices 
+    - RAID 10 
+    - Improving I/O access times but switching to Solid-State drives (SSD). SSD and Sequential Read/write: The difference isn’t that big 
+    - Even For some No SQL databases such as Cassandra, SSD is less attractive because of this sequential write/read. Pp. 23
+    - Reducing I/O operations by increasing RAM => this means more space for the file system cache and more working memory for the application
+    - Improving network throughput upgrading network interfaces or installing new ones: 
+        - Upgrade network provider’s connection or even upgrade your network adapters to allow greater throughput
+    - Switching to servers with more processors or more virtual core (threads). 
+    - Limits of Vertical Scaling: 
+        - Cost: Cost of RAM of 256GB >>> RAM of 128GB ($18,000.00 >>> $3,000.00)
+        - Database and applications limits due to Locks of share memory (lock contention)
+- Isolation of services: 
+    - It is moving different parts of the system to separate physical servers by installing each type of service on a separate physical machine
+    - A service is an application like:
+        - A web server (Apache for example) or 
+        - A database engine (MySQL), 
+        - File Transfer Protocol (FTP), 
+        - DNS, cache, etc. 
+    - Functional Partitioning: Divide your web app into smaller independent pieces and host them on separate machines 
+        - Admin console where customers can manage their accounts: Machine 1, 
+        - Main application business in Machine 2 
+        - Each part of the app would use a different subdomain so that traffic would be directed to it based simply on the IP address of the web server 
+- Content Delivery Network (CDN): 
+    - It is a pScalability for Static Content 
+    - A CDN is a hosted service that takes care of global distribution of static files (images, JavaScript, CSS, videos) 
+    - It works as an HTTP proxy: 
+        - Clients that need to download static files connect to one of the servers owned by the CDN provider instead of your servers 
+        - If the CDN server doesn’t have the requested content yet, it asks your server for it and caches it from then on
+    - This will reduce the amount of bandwidth your servers need
+    - CDN would serve static content from the closest data center
+- Horizontal Scalability: 
+    - Distribution of the Traffic
+    - Horizontally Scalable systems don’t need strong servers; they usually run on lots of  cheap “commodity” servers
+    - But it requires a specific architecture (different from 1 server system architecture)
+    - Areas where it is easiest to achieve horizontally Scalability: Web Servers, Caches
+    - Area where it is more difficult: databases, other persistence stores
+    - Round-Robin DNS service: 
+        - It used to distribute traffic among web servers 
+        - It is a DNS server feature allowing you to resolve a single domain name to one of many IP addresses 
+        - Once a client received an IP address, it will only communicate with the selected server 
+- Web Services Layer (7): 
+    - It contains our application logic (business)
+    - It is decoupled from the front-end layer (presentation and business logic are decoupled)
+    - It makes "Functional Partitions" easier to create
+    - The communication protocol used between front-end app. and web services is usually "Representational State Transfer" (REST) or Simple Object Access Protocol (SOAP) 
+    - They should be kept Stateless: this make easier to scale them horizontally
+    - They're often deployed in parallel to front-end application servers rather than hidden behind them (because they're exposed to 3rd-Parties and directly to customers)
+- Additional Components: Since frond-end servers and web services are stateless, web applications often deploy: 
+    - Object caches (5): used by bother frond-end application servers and web services
+    - Message queues (6): used to postpone some of the processing to a later stage and to delegate work to queue worker machines. 
+    - Queue Worker Machines (10): they're offline job-processing servers providing high-latency functions (such as asynchronous notifications and order fulfillment
+- Data Persistence Layer: 
+    - Most difficult layer to scale horizontally
+    - It is an area of polyglot persistence: 
+        - Where multiple data stores are used by the same company to leverage their unique benefits
+        - It allows better scalability
+- Application Architecture: 
+    - Domain-Driven Design: It should evolve around the business model (it shouldn't revolve around a framework or any particular technology)
+    - Front-end:  
+        - The layer translating between the public interface and internal service calls
+        - It will live in Front-end Servers (should be as dumb as possible, see Front-end layer above)
+        - It should allow communication over HTTP (AJAX, web sessions, for example)
+        - It should be as a plugin that could be removed, replaced or plugged back in, plug mobile front-end or command line front-end
+        - It should be decoupled from the web service layer (business logic) 
+        - It shouldn't be aware of any databases/3rd-party services
+        - It could send events to message queues and use cache back ends to increase the speed and scaling
+        - Whenever we can cache an entire or fragment of HTML page, we save much more processing time than caching just the related database query 
+    - Web Services: 
+        - This is called: Service-Oriented Architecture (SOA)
+        - I don't consider SOAP, REST, JSON or XML in the definition of SOA, as they are implementation details
+        - It will live only in the web services layer
+        - It is where most of the processing has to happen
+        - It is where most of the business logic should live
+        - Multi-Layers Architecture, Hexagonal Architecture, Event-Driven Architecture
+    - Supporting Technologies:  
+        - Message queues, application cache and search engine
+        - They are usually 3rd party software products configured to work with our system
+        - They could be considered as black boxes in the context of architecture
+        - Data stores (Databases): they should also be considered as black boxes and as plug-and-play extensions
+        - 3rd-party services: 
+            - They are put outside of our system boundary 
+            - They should be isolated by wrapping them in a layer of indirection (a good way to minimize the risk and our dependency on their availability)
+    - [Figure 1-10 High-level overview of the data center infrastructure]()
+
+</details>
+
+<details>
+<summary>2. Principles of Good Software Design</summary>
+</details>
+
+<details>
+<summary>3. Building the Front-End Layer</summary>
+</details>
+
+<details>
+<summary>4. Web Services </summary>
+</details>
+
+<details>
+<summary>5. Data Layer</summary>
+</details>
+
+<details>
+<summary>6. Caching</summary>
+</details>
+
+<details>
+<summary>7. Asynchronous Processing</summary>
+</details>
+
+<details>
+<summary>8. Searching for Data</summary>
+</details>
+
+<details>
+<summary>9. Other Dimensions of Scalability</summary>
+</details>
+
+<details>
+<summary>10. References</summary>
+
+- Books:
+    - Web Operation: Keeping the Data on Time (John Allspaw, Jesse Robbins, 2010)
+    - Beautiful Architecture: Leading Thinkers Reveal the Hidden Beauty in Software Design (Diomidis Spinellis, Georgios Gousious, 2009) 
+    - The Art of Capacity Planning: Scaling Web Resources (John Allspaw, 2008)
+    - Design Patterns: Elements of Reusable O-O Software (Eric Gamma, Richard Helm, Ralph Jonhson, John Vlissides, 1994)
+    - Web Sites: Performance Best Practices for Web Developers (Steve Souders, 2009)
+    - The Art of Lean Software Development (Curt Hibbs, 2009)
+    - Patterns of Entreprise Application Architecture (Martin Fowler, 2002)
+    - Team Geek (Brian Fitzpatrick, Ben Collins-Sussman, 2012)
+    - RabbitMQ in Action: Distributed Messaging for Everyone (Alvaro Videla, Jason Williams, 2012)
+    - The Art of Application Performance Testing: Help for Programmers and Quality Assurance (Ian Molyneaux, 2009)
+    - Spring Recipes: A Problem Solution Approach (Gary Mak, 2008)
+- Whitepapers:
+- Articles:
+- Talks:
+
+</details>
+ 
