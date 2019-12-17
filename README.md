@@ -1,4 +1,4 @@
-# Books' Notes
+# Books Notes
 ## 1. Write Great Code, Volume 1:
 By Randall Hyde, 2004
 
