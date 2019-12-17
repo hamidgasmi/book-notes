@@ -97,7 +97,6 @@ By Artur Ejsmont, 2005
 <details>
 <summary>1. Core Concepts</summary>
 
- 
 - Most scalability issues can be boiled down to just few measurements: 
     - Handling more data. 
     - Handling higher concurrency levels 
@@ -171,7 +170,7 @@ By Artur Ejsmont, 2005
         - It should be decoupled from the web service layer (business logic) 
         - It shouldn't be aware of any databases/3rd-party services
         - It could send events to message queues and use cache back ends to increase the speed and scaling
-        - Whenever we can cache an entire or fragment of HTML page, we save much more processing time than caching just the related database query 
+        - Whenever we can cache an entire (fragment of) HTML page, we save much more processing time than caching just the related database query 
     - Web Services: 
         - This is called: Service-Oriented Architecture (SOA)
         - I don't consider SOAP, REST, JSON or XML in the definition of SOA, as they are implementation details
@@ -187,7 +186,7 @@ By Artur Ejsmont, 2005
         - 3rd-party services: 
             - They are put outside of our system boundary 
             - They should be isolated by wrapping them in a layer of indirection (a good way to minimize the risk and our dependency on their availability)
-    - [Figure 1-10 High-level overview of the data center infrastructure]()
+    - ![Figure 1-10 High-level overview of the data center infrastructure](https://s3-us-west-2.amazonaws.com/hamidgasmi.com/Books/WebScalabilityforStartupEngineers/1-CoreConcepts-01.png)
 
 </details>
 
@@ -244,3 +243,5 @@ By Artur Ejsmont, 2005
 
 </details>
  
+## 3. Designing data-Intensive Applications:
+ by Martin Kleppmann, 2017
