@@ -1,4 +1,5 @@
 # Books Notes:
+
 ## 1. Write Great Code, Volume 1:
 By Randall Hyde, 2004
 
@@ -82,11 +83,33 @@ By Randall Hyde, 2004
         - E.g. 2, 0xFFFB (-5) => 0x0004 => 0x0005 (+5) 
         - E.g. 3, 0x8000 (smallest negative number) => 0x7FFF => 0x8000 (-32,768) => smallest negative number in n-bit doesn't have a positive representation (see n-bit representation limit above) 
 - Some useful Properties of Binary Numbers: 
-    - If LO bit = 1 in a binary (integer) => odd 
+    - If LO bit = 1 in a binary (integer) => odd
     - If LO bit = 0 in a binary (integer) => even 
-    - If the LO n bit of a binary number all contain 0 => the number is evenly divisible by 2^n 
-    - If a binary value contains a 1 in bit position n and 0s everywhere else => it’s equal to 2^n 
-    - If a binary value contains all 1s from Bit 0 to bit n - 1 and 0 elsewhere => it’s equal to 2^n - 1 
+    - If the n LO bit of a binary number all contain 0 => the number is evenly divisible by 2^n
+        - 00011000 (+24) => it's divisible by 2^3 (+8)
+        - 00101000 (+40) => it's divisible by 2^3 (+8)
+        - 10101000 (-88) => it's divisible by 2^3 (+8)
+    - If a binary value contains a 1 in bit position p and 0s everywhere else => it’s equal to 2^p
+        - 00001000 (p: 3) is equal to 2^3 (+8)
+        - 01000000 (p: 7) is equal to 2^7 (+128)
+    - If a binary value contains all 1s from Bit 0 to bit p - 1 and 0 elsewhere => it’s equal to 2^p - 1
+        - 00001111 (p: 4) is equal to 2^4 - 1 (+15)
+        - 01111111 (p: 7) is equal to 2^7 - 1 (+127) 
+    - Shifting all bits in a number to the left by 1 position multiplies the binary value by 2
+        - Shift(00001110, -1):(14*2) 00011100 (1C:28)
+        - What about signed binary numbers?
+    - Shifting all bits of an unsigned binary number to the right by 1 position divides the number by 2
+        - Shift(00001110, +1) (14/2) 00000111 (+7)
+        - Shift(00000111, +1) (7/2) 00000011 (+3)
+    - Multiplying 2 n-bit binary values together may require as many as 2*n bits to hold the result
+    - Adding or substracting 2 n-bit binary values never requires more than n+1 bits to hold the result
+    - Inverting all bits in a binary number is the same thing as negating (changing the sign) and then substracting 1 from the result
+        - Not n = n * (-1) - 1
+    - Incrementing (adding 1 to) the largest unsigned binary value for a given number of bits always produces a value of 0
+    - Decrementing (substracting 1 from) zero always produces the largest unsigned binary value for a given number of bits
+    - An n-bit value provides 2^n unique combinations of those bits
+    - The value 2^n - 1 contains n bits, each containing the value 1
+- You should memorize all the powers of 2 from 2^0 through 2^16, as these values come up in programs all the time
 
 </details>
 
