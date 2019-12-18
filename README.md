@@ -109,9 +109,28 @@ By Randall Hyde, 2004
     - Decrementing (substracting 1 from) zero always produces the largest unsigned binary value for a given number of bits
     - An n-bit value provides 2^n unique combinations of those bits
     - The value 2^n - 1 contains n bits, each containing the value 1
-- You should memorize all the powers of 2 from 2^0 through 2^16, as these values come up in programs all the time
+    - You should memorize all the powers of 2 from 2^0 through 2^16, as these values come up in programs all the time
+- Sign Extension, Zero Extension, and Contraction
 
 </details>
+
+<details>
+<summary>3. Binary Arithmetic and Bit Operations</summary>
+
+
+</details>
+
+<details>
+<summary>10. References</summary>
+
+- Books:
+- Whitepapers:
+- Articles:
+- Talks:
+
+</details>
+
+---
 
 ## 2. Web Scalability for Startup Engineers:
 Tips and Technics for Scaling your Web Application
@@ -430,6 +449,8 @@ By Artur Ejsmont, 2005
 - Talks:
 
 </details>
- 
+
+---
+
 ## 3. Designing data-Intensive Applications:
  by Martin Kleppmann, 2017
