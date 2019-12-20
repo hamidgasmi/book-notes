@@ -1,6 +1,6 @@
 # Books Notes:
 
-## 1. Write Great Code, Volume 1:
+## Write Great Code, Volume 1:
 By Randall Hyde, 2004
 
 <details>
@@ -176,7 +176,7 @@ By Randall Hyde, 2004
 
 ---
 
-## 2. Web Scalability for Startup Engineers:
+## Web Scalability for Startup Engineers:
 Tips and Technics for Scaling your Web Application
 By Artur Ejsmont, 2005
 
@@ -496,5 +496,5 @@ By Artur Ejsmont, 2005
 
 ---
 
-## 3. Designing data-Intensive Applications:
+## Designing data-Intensive Applications:
  by Martin Kleppmann, 2017
