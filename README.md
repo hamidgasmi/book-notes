@@ -71,17 +71,24 @@ By Randall Hyde, 2004
     - A tbyte: 
         - An 80-bit type that is on Intel 80x86 platforms 
         - The 80x86 CPU family uses tbyte variables to hold extended precision floating-point values and certain binary-coded decimal (BCD) values
-- Signed and Unsigned Numbers: 
-    - The two’s complement numbering system: 
-        - It uses the HO bit as a sign bit 
-        - With n digits, we can represent -2^[n -1] to +2^[n-1] - 1 
-        - E.g., with a 16-bit number 0x8000 (1000_0000_0000_0000b): it's the smalled 16-bit negative number
-    - Negation Algorithm: 
+- Signed Numbers - The 2’s complement numbering system: 
+    - It uses the HO bit as a sign bit 
+    - With n digits, we can represent -2^[n -1] to +2^[n-1] - 1
+    - E.g., with a 8-bit number 0x80 (10000000) is the smalled 16-bit negative number
+    - Negation Algorithm:
         - Invert all the bits in the number 
         - Add +1 and Ignore any overflow 
-        - E.g. 1, 0x0005 (+5) => (Inversion) 0xFFFA =>(+1) 0xFFFB (-5) 
-        - E.g. 2, 0xFFFB (-5) => 0x0004 => 0x0005 (+5) 
-        - E.g. 3, 0x8000 (smallest negative number) => 0x7FFF => 0x8000 (-32,768) => smallest negative number in n-bit doesn't have a positive representation (see n-bit representation limit above) 
+        - E.g. 1, 0x05 (+5) => (Inversion) 0xFA =>(+1) 0xFB (-5) 
+        - E.g. 2, 0xFB (-5) => 0x04 => 0x05 (+5) 
+        - E.g. 3, 0x80 (smallest negative number in 8-bit representation) => 0x7F => 0x80
+    - Smallest negative number in n-bit doesn't have a positive representation in n-bit representation (see n-bit representation limit above)
+    - A single negative value will have different representations depending on size of the representation:
+        - E.g. 1, -64:
+            - It's 0xC0 in a 8-bit representation 
+            - It's 0xFFC0 in a 16-bit representation
+        - E.g. 2, -126: 
+            - It's 0x82 in 8-bit representation
+            - It's 0xFF82 in a 16-bit representation
 - Some useful Properties of Binary Numbers: 
     - If LO bit = 1 in a binary (integer) => odd
     - If LO bit = 0 in a binary (integer) => even 
@@ -110,7 +117,23 @@ By Randall Hyde, 2004
     - An n-bit value provides 2^n unique combinations of those bits
     - The value 2^n - 1 contains n bits, each containing the value 1
     - You should memorize all the powers of 2 from 2^0 through 2^16, as these values come up in programs all the time
-- Sign Extension, Zero Extension, and Contraction
+- Sign Extension, Zero Extension, and Contraction:
+    - Extension of a non-negative value is different from the extension of a negative value:
+        - E.g. of a non-negative value: 0x40 in 8-bit is 0x0040 in 16-bit
+        - E.g. of a negative value: 0x82 in 8-bit is 0xFF82 in 16-bit (see 2's compliment numbering system above)
+    - The sign extension:
+        - It's extending a value from some number of bits to a greater number of bits
+        - It requires to copy the sign bit (1) into the additional HO bits in the new format
+        - E.g., Assigning a smaller integer to a larger integer
+        - It isn't always free even if it seems easy
+        - It may require more machine instructions than using data with 2 like-sized integer variables
+    - The zero extension:
+        - It's the sign extension for unsigned values
+        - It requires to copy 0 into the additional HO bits in the new format
+        - It isn't always free... see sign extension above
+    - The sign contraction:
+        - It's converting a value with some number of bits to the same value with a few number of bits
+        - 
 
 </details>
 
