@@ -125,15 +125,36 @@ By Randall Hyde, 2004
         - It's extending a value from some number of bits to a greater number of bits
         - It requires to copy the sign bit (1) into the additional HO bits in the new format
         - E.g., Assigning a smaller integer to a larger integer
+        - It never fails but...
         - It isn't always free even if it seems easy
         - It may require more machine instructions than using data with 2 like-sized integer variables
+        - It never fails
     - The zero extension:
         - It's the sign extension for unsigned values
         - It requires to copy 0 into the additional HO bits in the new format
-        - It isn't always free... see sign extension above
+        - It never fails but it isn't always free... see sign extension above
     - The sign contraction:
         - It's converting a value with some number of bits to the same value with a few number of bits
-        - 
+        - It can fail or generate a completly different number
+        - E.g., sign contract of -448 from a 16-bit representation 0xFE40 to a 8-bit can fail or generate a different number 0x40 (+64)
+        - C language simply stores the LO portion of the number into a smaller variable and throws away the HO portion 
+        - The algorithm is:
+        - 1st Check All HO bytes that we want to discard 
+        - If any HO bytes contain a value different from either 0x00 or OxFF (sign), conversion can't be done
+        - 2nd Check the HO bit of the resulting value
+        - It must match every bit removed in the previous step (either 0s or 1s)
+        - E.g., sign contract 16-bit values to 8-bit values:
+        - 0xFF80 is possible (0x80): discarded byte is 0xFF, HO bit in the resulting number (80) is equal to bits removed (1s of 0xFF byte)
+        - 0x0040 is possible (0x40): discarded byte is 0x00, HO bit in the resulting number (40) is equal to bits removed (0s of 0x00 byte)
+        - 0x0100 isn't possible: discarded byte 0x01 isn't 0x00 nor 0xFF
+        - 0xFF40 isn't possible: discarded byte 0xFF, HO bit in the resulting number (40) isn't equal to bits removed (1 of 0xFF byte)
+    - Recommendations:
+        - Use sign extension carefully as it isn't always free
+        - Avoid sign contraction as much as possible
+        - Compare the number to contract with upper and lower bounds values before contraction
+        - In low-level languages such as C/C++, turn this into a macro (#define) otherwise our code may become unreadble
+        - In high-level languages, a check may be done automatically, handle exceptions
+- Saturation:
 
 </details>
 
