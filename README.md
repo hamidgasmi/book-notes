@@ -719,182 +719,153 @@ By Artur Ejsmont, 2005
 <details>
 <summary>5. Data Layer</summary>
 
-Scalling a relational database engine (MySQL):
-	• Replication: have multiples copies (clones) of the same data stored on different machines.
-		○ Master-Slaves replication:
-			§ 1 Master dedicated for clients' writes requests (CUD: Creates, Updates, Deletes).
-			§ N Slaves dedicated for clients' read requests (R: Reads).
-			§ Synchronization (Master - Slave servers) is done through a log file called a binlog.
-			§ The master writes CUD binlog statements in  with a statement sequence #. 
-			§ Each Slave server copies statements from binlog file to its a relay log file. Then statements are executed on slave's dataset. 
-			§ Each slave server maintains the offset of the most recently seen statement from which to execute next statements.
-			§ Master and its Slaves servers replication is asynchronous: The master server writes on its own binglog file regardless if any slave servers are connected or not. The slave servers know where they left off and make sure to get the right updates.
-			§ Therefore, Master and Slaves servers are decoupled.
-			
-			§ Replication lag: it takes some time to a data to be replicated on all slave servers. It should take < 1 second.
-			§ Reads could be distributed on slave server (a Slave 1 for regular application queries, a Slave 2 for slow read queries such as reporting queries)
-			§ Use it to perform zero-downtime backups.
-			§ Slave failure: If a slave server dies, we can simply take it out of rotation (stop sending requests to that server). It isn't a big concern.
-			§ Master failure: MySQL doesn't support automatic failover or any mechanism of automated promotion of slave to a master. It is a manual process (find out a slave that is most up to date. Then reconfigure it to become a master. Make sure that the remaining slave servers are identical to the new master. Reconfigure them to replicate from the new master). 
-			§ We have a single source of truth semantics.
-			
-		○ Master-Master replication:
-			§ 2 master servers that could accept writes.
-			§ Circular Replication: Master A replicates from Master B and Master B replicates from Master A.
-			§ Binlog stores: the server name the statement was originally written to. This way, a statement isn't executed twice on the same server.
-			
-			§ Complex but it is a could be used as a faster solution for master server failover: In case of Master A failure, our application can be quickly reconfigured to direct all writes to Master B.
-			§ Masters can also have the same number of slave servers. Our application can be then running with equal capacity using either of the groups.
-			
-			§ This could be used to upgrade our software/hardware with minimal downtime (upgrade one group at a time)
-			§ It isn't recommended to let the application write on both masters at same time: higher complexity and risk of data inconsistency. Use auto-increment and UUID() in a specific way to make sure we never end up with the same sequence # being generated on both masters at the same time (see below). 
-			§ It isn't a scalability tool: master servers perform all writes (they don't do less) + additional writes relay log. Master servers have the same data size (more memory, more disk...).
-			§ We lose a single source of truth semantics.
-			
-		○ Ring Replication:
-			§ When 3 or more master servers.
-			§ It is the worst replication variants discussed so far.
-			§ Reduce availability (higher chance of one of servers failing) and makes failure recovery more difficult. 
-			
-			§ This increases replication lag: each write jumps from master to master until it makes a circle (if 4 master servers and 0.5 second for each replication then: 1.5 second for all replication)
-			§ We lose a single source of truth semantics.
-			
-	• Replication challenges:
-		○ Rebuilding a MySQL slave is manual process: In fact, MySQL doesn't allow us to bootstrap a slave from an empty database. We need a consistent backup of all of the data and the corresponding sequence # of the last statement that was executed. From there, the slave server could be started and it will begin catching up with the replication backlog. It could be long for busy databases.
-		○ Master failure management: see Master-Slaves replication above.
-		○ Replication lag:  
-			§ How to make sure that a read request that happen after a write get the most recent data?
-			§ No matter which server we ask, there may be an update on its way from the master that can't be seen yet.
-			§ This is called eventual consistency.
-			§ To prevent this timing issue, one approach is to cache the data that has been written on the client side so that we wouldn't need to read the data that we have just written.
-			
-		○ It isn't a way to scale data set size (since the whole data set is cloned in all servers).
-		○ There're many ways in which we can break MySQL replication or end up with inconsistent data: 
-			§ Using functions that generate random numbers or 
-			§ Executing an update statement with a limit clause may result in a different value written on the master and on its slaves. 
-			§ Once master and slaves get out of sync, we are in serious trouble, as all of the following CUD statements may also behave differently on each of the servers.
-			§ Open-Source tools that can help us to discover such problems: pt-table-checksum, pt-table-sync.
-		○ Deploy multiple levels of slaves to increase the read capacity:
-		
-		○ A good way to Scale the number of read queries per second
-			
-	• Data Partitioning (Sharding):
-		○ It is to divide the data set into smaller pieces so that it could be distributed across multiple machines.
-		○ It is a scaling tool since none of the servers would need to deal with the entire data set.
-		○ The servers become independent from one another, as they share nothing (in the simple sharding scenario)
-		○ Choosing the Sharding Key: It a way to find the server (the shard) where the data is stored by using the sharding key: 
-		○ Mapping with an Algorithm that allow us to map the sharding key value to the actual server number ().
-			§ This will make difficult to scale up: if new servers are added, the mapping algorithm will change and return wrong server #. 
-			§ For example, modulo based mapping, with 3 servers (0, 1, 2), user id = 8 would return server 2.
-			§ But with 4 servers (0, 1, 2, 3), user id = 8 would return 0.
-		○ The mapping should allow servers to end up with roughly the same amount of data.
-			§ For example, Sharding based on country of origin won't assure an equal distribution.
-			§ Some servers will have large data sets
-			§ Eventually, they will end up in situation where one bucket becomes so large that it can't be handled by a single machine any more!
-		
-		○ Mapping with a separate database: 
-			§ We could look up at the server # based on the sharding key value.
-			§ It fix the issue above of adding new shards.
-			§ Data could be migrated incrementally from one server to another, one account at a time.
-			§ To migrate a user, we need to lock their account, migrate the data, update data mapping table and then unlock the user account.
-			§ Migrate top sales clients to separate dedicated database instances to give them more capacity (sales scenario)
-			§ Or in another scenario, if activity isn't a good thing, migrate top noise clients into a database with all noisy users to punish them for consuming too many resources.
-			
-			
-			§ Implementation: We could use a MySQL database and use Master server that would be the source of truth + replicate that data to all of the shards + Cache to prevent any replication lag issue.
-			
-			
-		○ Mapping modulo function + logical database number:
-			§ We use the modulo function to map from the sharding key value to the database #, but each database is just a logical MySQL database rather that a physical machine.
-			§  Low cost and minimal increase of complexity.
-			§ 1st, we decide how many machines we want to start with (let's say: 2).
-			§ Then, we forecast how many machines, we may need down the road (let's say: 32).
-			§ In the example above (2 initial machines and 32 forecasted ones), we create 16 databases on each of the physical server.
-			§ In server A, we could name the databases: db-00 to db-15 and in server B: db-16 to db-31.
-			§ We deploy the exact same schema to each of these databases so that they're identical (see schema below).
-			
-			§ At the same time, we implement the mapping function in our code that allow us to find the database # and the physical server # based on the sharding key value.
-			§ When we need to scale out, we simply split our physical server in two and modify our mapping server function.
-			
-			§ Data migrations aren't needed (save time).
-			§ Small downtime for scaling out.
-		○ Ids aren't unique across shards (since they're generated using auto increment and databases don't know anything about one another). 
-			§ It may be acceptable.
-			§ Or if we wanted to have a globally unique IDS, we could use: auto_increment_offset.
-		○ Implementation:
-			§ It could be done on our application layer on top of any data store.
-			§ Some data stores provide automatic sharding and data distribution out of the box.
-		○ Challenges:
-			§ We can't execute queries spanning multiple shards (databases are independent). Execute on each shard then reprocess (merge, aggregate or group) on top of all sub results. For example, the product with TOP sales on each shard isn't necessary the product with TOP sales for the whole application!
-			§ We lose the ACID properties of our database as a whole. For example, if an update is needed on all shards, it could succeed on 1 share and it is committed but could fail on another shard and rolledback!
-			§ Get unique Ids globally: the application may need to enforce these rules. 
+- Scalling a relational database engine (MySQL):
+	- Replication: have multiples copies (clones) of the same data stored on different machines.
+		- Master-Slaves replication:
+			- 1 Master dedicated for clients' writes requests (CUD: Creates, Updates, Deletes).
+			- N Slaves dedicated for clients' read requests (R: Reads).
+			- Synchronization (Master - Slave servers) is done through a log file called a binlog.
+			- The master writes CUD binlog statements in  with a statement sequence #. 
+			- Each Slave server copies statements from binlog file to its a relay log file. Then statements are executed on slave's dataset. 
+			- Each slave server maintains the offset of the most recently seen statement from which to execute next statements.
+			- Master and its Slaves servers replication is asynchronous: The master server writes on its own binglog file regardless if any slave servers are connected or not. The slave servers know where they left off and make sure to get the right updates.
+			- Therefore, Master and Slaves servers are decoupled	
+			- Replication lag: it takes some time to a data to be replicated on all slave servers. It should take < 1 second.
+			- Reads could be distributed on slave server (a Slave 1 for regular application queries, a Slave 2 for slow read queries such as reporting queries)
+			- Use it to perform zero-downtime backups.
+			- Slave failure: If a slave server dies, we can simply take it out of rotation (stop sending requests to that server). It isn't a big concern.
+			- Master failure: MySQL doesn't support automatic failover or any mechanism of automated promotion of slave to a master. It is a manual process (find out a slave that is most up to date. Then reconfigure it to become a master. Make sure that the remaining slave servers are identical to the new master. Reconfigure them to replicate from the new master). 
+			- We have a single source of truth semantics
+		- Master-Master replication:
+			- 2 master servers that could accept writes.
+			- Circular Replication: Master A replicates from Master B and Master B replicates from Master A.
+			- Binlog stores: the server name the statement was originally written to. This way, a statement isn't executed twice on the same server.
+			- Complex but it is a could be used as a faster solution for master server failover: In case of Master A failure, our application can be quickly reconfigured to direct all writes to Master B.
+			- Masters can also have the same number of slave servers. Our application can be then running with equal capacity using either of the groups.
+			- This could be used to upgrade our software/hardware with minimal downtime (upgrade one group at a time)
+			- It isn't recommended to let the application write on both masters at same time: higher complexity and risk of data inconsistency. Use auto-increment and UUID() in a specific way to make sure we never end up with the same sequence # being generated on both masters at the same time (see below). 
+			- It isn't a scalability tool: master servers perform all writes (they don't do less) + additional writes relay log. Master servers have the same data size (more memory, more disk...).
+			- We lose a single source of truth semantics
+		- Ring Replication:
+			- When 3 or more master servers.
+			- It is the worst replication variants discussed so far.
+			- Reduce availability (higher chance of one of servers failing) and makes failure recovery more difficult
+			- This increases replication lag: each write jumps from master to master until it makes a circle (if 4 master servers and 0.5 second for each replication then: 1.5 second for all replication)
+			- We lose a single source of truth semantics.
+		- Replication challenges:
+			- Rebuilding a MySQL slave is manual process: In fact, MySQL doesn't allow us to bootstrap a slave from an empty database. We need a consistent backup of all of the data and the corresponding sequence # of the last statement that was executed. From there, the slave server could be started and it will begin catching up with the replication backlog. It could be long for busy databases.
+			- Master failure management: see Master-Slaves replication above.
+			- Replication lag:  
+				- How to make sure that a read request that happen after a write get the most recent data?
+				- No matter which server we ask, there may be an update on its way from the master that can't be seen yet.
+				- This is called eventual consistency.
+				- To prevent this timing issue, one approach is to cache the data that has been written on the client side so that we wouldn't need to read the data that we have just written.
+			- It isn't a way to scale data set size (since the whole data set is cloned in all servers).
+			- There're many ways in which we can break MySQL replication or end up with inconsistent data: 
+				- Using functions that generate random numbers or 
+				- Executing an update statement with a limit clause may result in a different value written on the master and on its slaves. 
+				- Once master and slaves get out of sync, we are in serious trouble, as all of the following CUD statements may also behave differently on each of the servers.
+				- Open-Source tools that can help us to discover such problems: pt-table-checksum, pt-table-sync.
+			- Deploy multiple levels of slaves to increase the read capacity:
+				- A good way to Scale the number of read queries per second
+	- Data Partitioning (Sharding):
+		- It is to divide the data set into smaller pieces so that it could be distributed across multiple machines.
+		- It is a scaling tool since none of the servers would need to deal with the entire data set.
+		- The servers become independent from one another, as they share nothing (in the simple sharding scenario)
+		- Choosing the Sharding Key: It a way to find the server (the shard) where the data is stored by using the sharding key: 
+		- Mapping with an Algorithm that allow us to map the sharding key value to the actual server number ().
+			- This will make difficult to scale up: if new servers are added, the mapping algorithm will change and return wrong server #. 
+			- For example, modulo based mapping, with 3 servers (0, 1, 2), user id = 8 would return server 2.
+			- But with 4 servers (0, 1, 2, 3), user id = 8 would return 0.
+		- The mapping should allow servers to end up with roughly the same amount of data.
+			- For example, Sharding based on country of origin won't assure an equal distribution.
+			- Some servers will have large data sets
+			- Eventually, they will end up in situation where one bucket becomes so large that it can't be handled by a single machine any more!
+		- Mapping with a separate database: 
+			- We could look up at the server # based on the sharding key value.
+			- It fix the issue above of adding new shards.
+			- Data could be migrated incrementally from one server to another, one account at a time.
+			- To migrate a user, we need to lock their account, migrate the data, update data mapping table and then unlock the user account.
+			- Migrate top sales clients to separate dedicated database instances to give them more capacity (sales scenario)
+			- Or in another scenario, if activity isn't a good thing, migrate top noise clients into a database with all noisy users to punish them for consuming too many resources.
+			- Implementation: We could use a MySQL database and use Master server that would be the source of truth + replicate that data to all of the shards + Cache to prevent any replication lag issue
+		- Mapping modulo function + logical database number:
+			- We use the modulo function to map from the sharding key value to the database #, but each database is just a logical MySQL database rather that a physical machine.
+			-  Low cost and minimal increase of complexity.
+			- 1st, we decide how many machines we want to start with (let's say: 2).
+			- Then, we forecast how many machines, we may need down the road (let's say: 32).
+			- In the example above (2 initial machines and 32 forecasted ones), we create 16 databases on each of the physical server.
+			- In server A, we could name the databases: db-00 to db-15 and in server B: db-16 to db-31.
+			- We deploy the exact same schema to each of these databases so that they're identical (see schema below).
+			- At the same time, we implement the mapping function in our code that allow us to find the database # and the physical server # based on the sharding key value.
+			- When we need to scale out, we simply split our physical server in two and modify our mapping server function.
+			- Data migrations aren't needed (save time).
+			- Small downtime for scaling out.
+		- Ids aren't unique across shards (since they're generated using auto increment and databases don't know anything about one another). 
+			- It may be acceptable.
+			- Or if we wanted to have a globally unique IDS, we could use: auto_increment_offset.
+		- Implementation:
+			- It could be done on our application layer on top of any data store.
+			- Some data stores provide automatic sharding and data distribution out of the box.
+		- Challenges:
+			- We can't execute queries spanning multiple shards (databases are independent). Execute on each shard then reprocess (merge, aggregate or group) on top of all sub results. For example, the product with TOP sales on each shard isn't necessary the product with TOP sales for the whole application!
+			- We lose the ACID properties of our database as a whole. For example, if an update is needed on all shards, it could succeed on 1 share and it is committed but could fail on another shard and rolledback!
+			- Get unique Ids globally: the application may need to enforce these rules. 
 				□ MySQL: use auto-increment with an offset to ensure that each shard generates different #.
 				□ Redis: use INCR command to increase the value of selected counter and return it in an atomic fashion. This way, we could have multiple clients requesting a new identifier in parallel and each of them would end up with a different value (guaranteeing global uniqueness).
-			§ Lot of extra work to scale out (add new servers): see above.
-			§ A solution of all challenges above is to use a cloud hosting provider (Azure SQL Database Elastic Scale is set of libraries and supporting services that take responsibility for sharding, shard management, data migration, mapping, and even cross-shard query execution)
-			
-	• Put it all together:
-	Situation	How to scale
-	Many more reads than writes	1. Replication: Scale reads by adding read replica servers
-		2. They've the exact copy of the data that the master database has
-		3. The reads will be done then from the slave databases
-		4. The writes will be done in the master database
-		
-	If it ins't enough	1. Functional partitioning: Split the database into 2 functional components
-		Example: 
-		Store all of the user-centric data on one database and the rest of the data in a separate database.
-		At the same time, we could split the functionality of our web services layer into 2 independent web services. Each of them will deal with one of the servers above.
-		        
-		1. Functional partitioning + Replication (situation 1 and 2):
-		        • A functional server could be replicated (Master/Slaves) if needed
-		        • A slave could be used as a backup: failover slave.
-
-Scalling with No SQL:
-	• Eric Brewer's CAP theorem:  it is impossible to build a distributed system that would simultaneously guarantee Consistency, availability and Partition tolerance.
-	• Consistency ensures that all of the nodes see the same data at the same time.
-	• Availability guarantees that any available node can server client requests even when other nodes fail.
-	• Partition tolerance ensures that the system can operate even in the face of network failures where communication between nodes is impossible.
-	
-	• CAP theorem was popularized under a simplified label: "Consistency, Availability, or Partition tolerance: Pick 2"
-	
-	• Eventual Consistency:
-		○ A property of a system where different nodes may have different versions of the data,
-		○ But where state changes eventually propagate to all of the servers.
-		○ Conflicts could happen: an item updated in 2 different servers at the same time
-		○ A conflict could be resolved by "The most recent write wins" policy. It is simple but it may lead to some data being lost.
-		○ Dynamo: A conflict could also be resolved by clients: all conflicting values are kept. When a client asks for that data, it would then return the conflicted version of the data, letting the client decide how to resolve the conflict. For example for Amazon shopping card, if there're 2 shopping cards version, the client service will merge them.
-		○ Cassandra: employs self-healing strategies. 10% of reads sent to Cassandra nodes trigger a background read repair mechanism: After a response is sent to the client, the Cassandra node fetches the requested data from all of the replicas, compares their values, and sends updates back to any node with inconsistent or stale data.
-		○ Some eventually consistent systems, such as Cassandra, allow clients to fine-tune the guarantees and tradeoffs made by specifying the consistency level of each query independently. We can choose which queries require more consistency and which ones can deal with stale data.
-		
-	• Quorum Consistency: means the majority of the replicas agree on the result. 
-		○ When we write using quorum consistency, the majority of the servers need to confirm that they have persisted our change.
-		○ Reading using quorum means that the majority of the replicas need to respond so that the most up-to-date copy of the data can be found and returned to the client.
-		○ Good to trade latency for consistency: we need to wait longer for the majority of the servers to respond but we get the freshest data.
-		
-	• Faster Recovery to Increase Availability:
-		○ A good example is MongoDB.
-		○ Data is automatically sharded and distributed among multiple servers. Each piece of data belongs to a single server, and anyone who wants to update data needs to talk to the server responsible for that data.
-		○ Any time a severs becomes unavailable, MongoDB rejects all writes to the data that the server was responsible for.
-		○ MongoDB supports replica sets and it is recommended to setup each of the shards as a replica set.
-		○ In replica sets, multiple servers share the same data, with a single server being elected as a primary. Whenever the primary node fails, an election process is initiated to decide which of the remaining nodes should take over the primary role. Once the new primary node is elected, replication within the replica set resumes and the new primary node's data is replicated to the remaining nodes. This way, the window of unavailability can be minimized by automatic and prompt failover.
-		○ MongoDB is "more" to CP: Consistency and Partition Tolerance. But: if the primary node failed before our changes got replicated to secondary nodes, our changes would be permanently lost.
-		
-		
-	• Cassandra Topology:
-		○ It is built at facebook and could be seen as a merger of design patterns borrowed from BigTable (google) and Dynamo (Amazon).
-		○ All its nodes are functionally equal.
-		○ It doesn't have a single point of failure, and all of its nodes perform the exact same functions. 
-		○ Clients can connect to any of Cassandra's nodes 
-		○ When they connect to one, that node becomes the client's session coordinator.
-		○ Clients send all of their requests to the session coordinator and the coordinator takes responsibility for all of the internal cluster activities like replication or sharding.
-		
-		○ Although Cassandra nodes have same function in the cluster, they are not identical: each node has a dataset it is responsible for.
-		○ Cassandra data model is based on a wide column: we create tables and then each table can have an unlimited number of rows.
-		○ Different rows may have different columns (fields) and they may live on different servers in the cluster.
-		○ Downside (searching): to access data in any of the columns, we need to know which row are we looking for. And to locate the row, we need to know its row key.
-		○ It supports a form of replication (different from replication in MySQL): there is no master-slave relationship between servers. Each copy of the data is equal important. 
-		
-		Administration is done automatically: for example replacement of a node that is down because all the data that is in this server is also stored on multiple servers.
+			- Lot of extra work to scale out (add new servers): see above.
+			- A solution of all challenges above is to use a cloud hosting provider (Azure SQL Database Elastic Scale is set of libraries and supporting services that take responsibility for sharding, shard management, data migration, mapping, and even cross-shard query execution)
+	- Put it all together:
+		- Situation	How to scale
+		- Many more reads than writes	1. Replication: Scale reads by adding read replica servers
+			- They've the exact copy of the data that the master database has
+			- The reads will be done then from the slave databases
+			- The writes will be done in the master database
+		- If it ins't enough	1. Functional partitioning: Split the database into 2 functional components
+			- Example: 
+			- Store all of the user-centric data on one database and the rest of the data in a separate database.
+			- At the same time, we could split the functionality of our web services layer into 2 independent web services. Each of them will deal with one of the servers above.
+			- Functional partitioning + Replication (situation 1 and 2):
+				- A functional server could be replicated (Master/Slaves) if needed
+		        - A slave could be used as a backup: failover slave.
+- Scalling with No SQL:
+	- Eric Brewer's CAP theorem:  it is impossible to build a distributed system that would simultaneously guarantee Consistency, availability and Partition tolerance.
+	- Consistency ensures that all of the nodes see the same data at the same time.
+	- Availability guarantees that any available node can server client requests even when other nodes fail.
+	- Partition tolerance ensures that the system can operate even in the face of network failures where communication between nodes is impossible.
+	- CAP theorem was popularized under a simplified label: "Consistency, Availability, or Partition tolerance: Pick 2"
+	- Eventual Consistency:
+		- A property of a system where different nodes may have different versions of the data,
+		- But where state changes eventually propagate to all of the servers.
+		- Conflicts could happen: an item updated in 2 different servers at the same time
+		- A conflict could be resolved by "The most recent write wins" policy. It is simple but it may lead to some data being lost.
+		- Dynamo: A conflict could also be resolved by clients: all conflicting values are kept. When a client asks for that data, it would then return the conflicted version of the data, letting the client decide how to resolve the conflict. For example for Amazon shopping card, if there're 2 shopping cards version, the client service will merge them.
+		- Cassandra: employs self-healing strategies. 10% of reads sent to Cassandra nodes trigger a background read repair mechanism: After a response is sent to the client, the Cassandra node fetches the requested data from all of the replicas, compares their values, and sends updates back to any node with inconsistent or stale data.
+		- Some eventually consistent systems, such as Cassandra, allow clients to fine-tune the guarantees and tradeoffs made by specifying the consistency level of each query independently. We can choose which queries require more consistency and which ones can deal with stale data.
+	- Quorum Consistency: means the majority of the replicas agree on the result. 
+		- When we write using quorum consistency, the majority of the servers need to confirm that they have persisted our change.
+		- Reading using quorum means that the majority of the replicas need to respond so that the most up-to-date copy of the data can be found and returned to the client.
+		- Good to trade latency for consistency: we need to wait longer for the majority of the servers to respond but we get the freshest data.
+	- Faster Recovery to Increase Availability:
+		- A good example is MongoDB.
+		- Data is automatically sharded and distributed among multiple servers. Each piece of data belongs to a single server, and anyone who wants to update data needs to talk to the server responsible for that data.
+		- Any time a severs becomes unavailable, MongoDB rejects all writes to the data that the server was responsible for.
+		- MongoDB supports replica sets and it is recommended to setup each of the shards as a replica set.
+		- In replica sets, multiple servers share the same data, with a single server being elected as a primary. Whenever the primary node fails, an election process is initiated to decide which of the remaining nodes should take over the primary role. Once the new primary node is elected, replication within the replica set resumes and the new primary node's data is replicated to the remaining nodes. This way, the window of unavailability can be minimized by automatic and prompt failover.
+		- MongoDB is "more" to CP: Consistency and Partition Tolerance. But: if the primary node failed before our changes got replicated to secondary nodes, our changes would be permanently lost	
+	- Cassandra Topology:
+		- It is built at facebook and could be seen as a merger of design patterns borrowed from BigTable (google) and Dynamo (Amazon).
+		- All its nodes are functionally equal.
+		- It doesn't have a single point of failure, and all of its nodes perform the exact same functions. 
+		- Clients can connect to any of Cassandra's nodes 
+		- When they connect to one, that node becomes the client's session coordinator.
+		- Clients send all of their requests to the session coordinator and the coordinator takes responsibility for all of the internal cluster activities like replication or sharding
+		- Although Cassandra nodes have same function in the cluster, they are not identical: each node has a dataset it is responsible for.
+		- Cassandra data model is based on a wide column: we create tables and then each table can have an unlimited number of rows.
+		- Different rows may have different columns (fields) and they may live on different servers in the cluster.
+		- Downside (searching): to access data in any of the columns, we need to know which row are we looking for. And to locate the row, we need to know its row key.
+		- It supports a form of replication (different from replication in MySQL): there is no master-slave relationship between servers. Each copy of the data is equal important
+		- Administration is done automatically: for example replacement of a node that is down because all the data that is in this server is also stored on multiple servers.
 
 </details>
 
