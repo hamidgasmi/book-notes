@@ -642,86 +642,77 @@ By Artur Ejsmont, 2005
 <details>
 <summary>4. Web Services </summary>
 
-Designing Web Services:
-    Web Services an an Alternative Presentation Layer:
-	• Oldest approach: Build web app 1st and then add web services on top of it
-	• Monolithic approach
-	• Easy to implement. Could be good for MVPs since business model isn’t tested. But not good from scalability perdpective
-		
-    The API-First Approach:
-	• It is a new approach
-	• It implies designing and building api contracts first and then building clients consuming that API
-	• It came 1st as a solution to the problem of multiple user interfaces
-	• It is usually much more difficult in practice than it might sound
-	• It is better suited for more stable companies than it is for early-phase startups
-	• It may be a cleaner way to build software, but it requires more planning, knowledge about your final requirements, and engineering resources as it takes more experience to design a scalable web service and make it flexible at the same time
-		
-    Pragmatic Approach:
-	• Learn and fail fast: no api first approach
-	• Then once the idea is tested, implement a web service
-	• As a result of this mixed approach, we’re likely going to end up with a combination of tightly coupled small web applucation of little business value and a set of web services fulfilling more significant and well-defined needs
-
-Types of Web Services:
-    Function-Centric Services:
-	• The concept is to be able to call functions’ or objects’ methods on remote machines without the need to know how they are implemented (language, architecture)
-	• All arguments and data needed to execute that function would be serialized and sent over the network to a machine that is supposed to execute it… serialize the result and send it back over the network
-	• In practice, this was much more difficult to implement across programming languages, Central Processing Unit (CPU) architectures, run-time environments as everyone had to agree on a strict and precise way of passing arguments, converting values, and handling errors… additionally, we have to deal with resource locking, security, network latencies, concurrency, and contracts upgrades
-	• There were a few types: Common Object Request Broker Architecture (CORBA), Extensible Markup Language - Remote Procédure Call (XML-RPC), Distributed Component Object Model (DCOM), and Simple Object Access Peotocol (SOAP)
-	• SOAP became the dominant technology
-	• SOAP implementation is to use XML to describe and encode messages and the HTTP to transport request and responses between clients and servers (WSDL and XSD files)
-	• Impraticable with web technologies like PHP
-	• We can’t use HTTP-level caching with SOAP: because soap requests are issued by sending XML documents (request parameters and method names are contained in the XML document itself The Uniform Resource Locator URL doesn’t contain all the information needed to perform the remote procedure call)
-	• The fact above makes SOAP much less scalable in applucation where the web service response could be cached by a reverse proxy
-	• Some SOAP ws-* are stateful
-	• Not recommended!
-
+- Designing Web Services:
+	- Web Services an an Alternative Presentation Layer:
+		- Oldest approach: Build web app 1st and then add web services on top of it
+		- Monolithic approach
+		- Easy to implement. Could be good for MVPs since business model isn’t tested. But not good from scalability perdpective	
+	- The API-First Approach:
+		- It is a new approach
+		- It implies designing and building api contracts first and then building clients consuming that API
+		- It came 1st as a solution to the problem of multiple user interfaces
+		- It is usually much more difficult in practice than it might sound
+		- It is better suited for more stable companies than it is for early-phase startups
+		- It may be a cleaner way to build software, but it requires more planning, knowledge about your final requirements, and engineering resources as it takes more experience to design a scalable web service and make it flexible at the same time
+	- Pragmatic Approach:
+		- Learn and fail fast: no api first approach
+		- Then once the idea is tested, implement a web service
+		- As a result of this mixed approach, we’re likely going to end up with a combination of tightly coupled small web applucation of little business value and a set of web services fulfilling more significant and well-defined needs
+- Types of Web Services:
+	- Function-Centric Services:
+		- The concept is to be able to call functions’ or objects’ methods on remote machines without the need to know how they are implemented (language, architecture)
+		- All arguments and data needed to execute that function would be serialized and sent over the network to a machine that is supposed to execute it… serialize the result and send it back over the network
+		- In practice, this was much more difficult to implement across programming languages, Central Processing Unit (CPU) architectures, run-time environments as everyone had to agree on a strict and precise way of passing arguments, converting values, and handling errors… additionally, we have to deal with resource locking, security, network latencies, concurrency, and contracts upgrades
+		- There were a few types: Common Object Request Broker Architecture (CORBA), Extensible Markup Language - Remote Procédure Call (XML-RPC), Distributed Component Object Model (DCOM), and Simple Object Access Peotocol (SOAP)
+		- SOAP became the dominant technology
+		- SOAP implementation is to use XML to describe and encode messages and the HTTP to transport request and responses between clients and servers (WSDL and XSD files)
+		- Impraticable with web technologies like PHP
+		- We can’t use HTTP-level caching with SOAP: because soap requests are issued by sending XML documents (request parameters and method names are contained in the XML document itself The Uniform Resource Locator URL doesn’t contain all the information needed to perform the remote procedure call)
+		- The fact above makes SOAP much less scalable in applucation where the web service response could be cached by a reverse proxy
+		- Some SOAP ws-* are stateful
+		- Not recommended!
     Ressource-Centric Services
-	• Each resource can be treated as a type of object, and there are only few operations that can be performed on the objects (create, delete, update, and fetch)
-	• REST Framework: an HTTP service with a routing mechanism to map the URL patterns to our code
-	• Drawbacks: Clients won't be able to auto-generate the client code or discover the web service behavior
-	• Benefit: it is less strict, allowing nonbreaking changes to be released to the server side without the need to recompile and redeploy the clients
-	• A way to go around the problem of discoverability is for the service provider to build and share libraries for common languages. Client code needs to be written only once and then can be reused by multiple customers/partners This puts burden on the service provider, but allows you to reduce onboarding friction and create even better abstraction than autogenerated code would
-	• Security: the client would 1st authenticate (often using Oauth 2) and then provide the authentication token in HTTP headers of each requests 
-	• REST services depend on HTTPS
-	• They're stateless and public operations performed using GET method could be cached transparently by HTTP caches
-
-- Scaling REST Web Services:
-    Keep Service Machines Stateless:
-	• Push all shared state out of our web service machines onto shared data stores like object caches, databases, and message queues (see previous chapter)
-	• The only type that is safe to keep on our web service machines are cached objects, which don't need to be synchronized or invalidated in any way. By definition, cache is disposable and can be rebuilt at any point of time, so server failure doesn't cause any data loss.
-	• Use cases where we'll need to share some state between our web service machines:
-		○ Security: as our web service is likely going to require clients to pass some authentication token with each web service request (token to be validated on the web service side).  The best approach is to use a shared in-memory object cache by mapping the authentication token and have each web service machine reach out for data needed at request time (this makes easy to invalidate it when users' permissions change)
-		○ How to support resource Locking: this could be handled by distributed lock systems (Zookeeper) or develop our own lock service using a data store of our choice. To make sure our web services scale, we should avoid resource locks for as long as possible and look for alternative ways to synchronize parallel processes (it is challenging and creates an opportunity for our service to stall or fail) Alternatives of locks are sometimes possible: use optimistic concurrency control where we check the state before the final update; use message queues as a way to decouple components and remove the need for resource locking
-		○ How to avoid deadlocks: If we decide to use locks, it is important to acquire them in a consistent order. For example, if we're locking 2 user accounts to transfer funds between them, make sure we always lock them in the same order (the account with an alphanumerically lower account # gets locked first)
-		○ Lock granularity: if we go with locks, we need to strike a balance between having to acquire a lot of fine-grained locks and having coarse lock that block access to large sets of data 
-		○ Fine-grained locks increase latency as we keep sending requests to the distributed locks service. They may also increase the complexity and losing clarity as to how locks are being acquired and from where => source for deadlocks
-		○ Few coarse locks: may reduce the latency and risk of deadlocks, but  we can hurt our concurrency at the same time, as multiple web service threads can be blocked waiting on the same resource lock
-		
-	• Application-level transactions: transactions can become difficult to implement, especially if we want to expose transactional guarantees in our web service contract and then coordinate higher-level distributed transactions on top of these services
-		○ A distributed transaction is a set of internal service steps and external web service calls that either complete together or fail entirely (it is similar to database transaction). The most common method of implementing distributed transactions is the 2 Phase Commit (2 PC) algorithm Stay away from distributed transactions and consider alternatives instead
-		○ Alternative 1: is to not support them at all
-		○ Alternative 2: is to provide a mechanism of compensating transaction. A compensating transaction can be used to revert the result of an operation that was issued as part of a larger logical transaction that has failed
-
-    Caching Service Responses:
-	• It is about using the power of HTTP protocol caching (Get requests: Make sure 1st than it doesn't cause any state change or data updates... Even logs that could be useful for BI and advertising teams)
-	• Be careful to web servers' local object caches. This could make each local cache to have its version
-	• Identify web services which require authentication and which do not 
-		○ Authenticated REST endpoints could make each user to see different data based on their permissions. This means that the URL isn't enough to produce the response for the particular user
-		○ Instead the HTTP cache would need to include the authentication headers when building the caching key
-		○ This cache separation (a separate cache for each user) is good if our users should see different data, but it is wasteful if they should actually see the same thing
-		○ Authenticated REST resources by using HTTP headers like Vary
-		○ To leverage HTTP caching: make as many of our resources public as possible. This allows us to have a single cached object for each URL
-
-    Functional Partitioning:
-	• It is a way to split a service into a set of smaller, fairly independent web services, where each of them focuses on a subset of functionality of the overall system.
-	• For example for an e-Commerce website, we could have two functional partitioning. 1st one for products and the second one for customers.
-	• The 2 functional partitioning could have differences in access patterns (More reads for products; more write for customers) => this result in different scalability needs
-	• Does it make sense to use the same caching for both services?
-	• Does it make sense to use the same type of data store?
-	• Are both services equally critical to the business, and is the nature of the data they store the same?
-	• Do we need to implement both of these vastly different web services using the same technology stack?
-	• It would be best if we could answer "No" to these questions.
-	• Be careful of performing functional partitioning too early or creating too many partitions: when new use cases arise that require a combination of data and features present in multiple web services. For example, what if we need to built a recommendation service where we need data from both services (products and customers).
+		- Each resource can be treated as a type of object, and there are only few operations that can be performed on the objects (create, delete, update, and fetch)
+		- REST Framework: an HTTP service with a routing mechanism to map the URL patterns to our code
+		- Drawbacks: Clients won't be able to auto-generate the client code or discover the web service behavior
+		- Benefit: it is less strict, allowing nonbreaking changes to be released to the server side without the need to recompile and redeploy the clients
+		- A way to go around the problem of discoverability is for the service provider to build and share libraries for common languages. Client code needs to be written only once and then can be reused by multiple customers/partners This puts burden on the service provider, but allows you to reduce onboarding friction and create even better abstraction than autogenerated code would
+		- Security: the client would 1st authenticate (often using Oauth 2) and then provide the authentication token in HTTP headers of each requests 
+		- REST services depend on HTTPS
+		- They're stateless and public operations performed using GET method could be cached transparently by HTTP caches
+- Scaling REST Web Services - Keep Service Machines Stateless:
+		- Push all shared state out of our web service machines onto shared data stores like object caches, databases, and message queues (see previous chapter)
+		- The only type that is safe to keep on our web service machines are cached objects, which don't need to be synchronized or invalidated in any way. By definition, cache is disposable and can be rebuilt at any point of time, so server failure doesn't cause any data loss.
+		- Use cases where we'll need to share some state between our web service machines:
+			- Security: as our web service is likely going to require clients to pass some authentication token with each web service request (token to be validated on the web service side).  The best approach is to use a shared in-memory object cache by mapping the authentication token and have each web service machine reach out for data needed at request time (this makes easy to invalidate it when users' permissions change)
+			- How to support resource Locking: this could be handled by distributed lock systems (Zookeeper) or develop our own lock service using a data store of our choice. To make sure our web services scale, we should avoid resource locks for as long as possible and look for alternative ways to synchronize parallel processes (it is challenging and creates an opportunity for our service to stall or fail) Alternatives of locks are sometimes possible: use optimistic concurrency control where we check the state before the final update; use message queues as a way to decouple components and remove the need for resource locking
+			- How to avoid deadlocks: If we decide to use locks, it is important to acquire them in a consistent order. For example, if we're locking 2 user accounts to transfer funds between them, make sure we always lock them in the same order (the account with an alphanumerically lower account # gets locked first)
+			- Lock granularity: if we go with locks, we need to strike a balance between having to acquire a lot of fine-grained locks and having coarse lock that block access to large sets of data 
+			- Fine-grained locks increase latency as we keep sending requests to the distributed locks service. They may also increase the complexity and losing clarity as to how locks are being acquired and from where => source for deadlocks
+			- Few coarse locks: may reduce the latency and risk of deadlocks, but  we can hurt our concurrency at the same time, as multiple web service threads can be blocked waiting on the same resource lock		
+		- Application-level transactions: transactions can become difficult to implement, especially if we want to expose transactional guarantees in our web service contract and then coordinate higher-level distributed transactions on top of these services
+			- A distributed transaction is a set of internal service steps and external web service calls that either complete together or fail entirely (it is similar to database transaction). The most common method of implementing distributed transactions is the 2 Phase Commit (2 PC) algorithm Stay away from distributed transactions and consider alternatives instead
+			- Alternative 1: is to not support them at all
+			- Alternative 2: is to provide a mechanism of compensating transaction. A compensating transaction can be used to revert the result of an operation that was issued as part of a larger logical transaction that has failed
+- Scaling REST Web Services - Caching Service Responses:
+		- It is about using the power of HTTP protocol caching (Get requests: Make sure 1st than it doesn't cause any state change or data updates... Even logs that could be useful for BI and advertising teams)
+		- Be careful to web servers' local object caches. This could make each local cache to have its version
+		- Identify web services which require authentication and which do not 
+			- Authenticated REST endpoints could make each user to see different data based on their permissions. This means that the URL isn't enough to produce the response for the particular user
+			- Instead the HTTP cache would need to include the authentication headers when building the caching key
+			- This cache separation (a separate cache for each user) is good if our users should see different data, but it is wasteful if they should actually see the same thing
+			- Authenticated REST resources by using HTTP headers like Vary
+			- To leverage HTTP caching: make as many of our resources public as possible. This allows us to have a single cached object for each URL
+- Scaling REST Web Services - Functional Partitioning:
+		- It is a way to split a service into a set of smaller, fairly independent web services, where each of them focuses on a subset of functionality of the overall system.
+		- For example for an e-Commerce website, we could have two functional partitioning. 1st one for products and the second one for customers.
+		- The 2 functional partitioning could have differences in access patterns (More reads for products; more write for customers) => this result in different scalability needs
+		- Does it make sense to use the same caching for both services?
+		- Does it make sense to use the same type of data store?
+		- Are both services equally critical to the business, and is the nature of the data they store the same?
+		- Do we need to implement both of these vastly different web services using the same technology stack?
+		- It would be best if we could answer "No" to these questions.
+		- Be careful of performing functional partitioning too early or creating too many partitions: when new use cases arise that require a combination of data and features present in multiple web services. For example, what if we need to built a recommendation service where we need data from both services (products and customers).
 
 </details>
 
