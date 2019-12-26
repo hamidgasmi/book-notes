@@ -1202,9 +1202,96 @@ by Nathan Marz and James Warren, 2015
 		- HA system sometimes returns stale results during a network partitions
 		- Eventual consistency requires an amazing amount of complexity
 	- Lack of human-fault tolerance:
-		- It's a synchronous system: it makes updates directy to the database => it leads to data corruption
-		- It's solved by adding an event log layer but it doesn't resolve underlying complexities
-- Lambda Architecture
+		- A synchronous system makes updates directy to the database => it leads to data corruption
+		- It's solved by making a system asynchronous: adding an event log layer but it doesn't resolve underlying complexities
+- Fully incremental solution vs. Lambda Architecture solution:
+	- E.g., The query on pageview analytics and is done on two kinds of data coming in: 
+	- Pageviews: contain a user ID, URL, and timestamp 
+	- Equivs: 
+		- It contains user IDs mappings refering to the same person 
+		- It allows to compute the number of unique visitors to a URL over a range of time
+		- E.g., an equiv between the email sally@gmail.com and the username sally 
+		- If sally@gmail.com also registers for the username sally2, then you would have an equiv between sally@gmail.com and sally2. 
+	- Queries should be up to date with all data and respond with minimal latency (< 0.1 s)
+	- The challenge is with those equivs: 
+		- If a person visits the same URL in a time range with 2 user IDs connected via equivs (even transitively), 
+		- It should only count as one visit 
+		- A new equiv coming in can change the results for any query over any time range for any URL
+	- The best possible fully incremental solution is shown in detail in chapter 10
+	- The Lambda Architecture solution is built up in chapters 8, 9, 14, and 15	 
+	- The 2 solutions can be compared on three axes Accuracy, Latency and, Throughput
+	- Both must make approximations, but the fully incremental version is forced to use an inferior approximation technique with a 3–5x worse error rate
+	- Performing queries is significantly more expensive in the fully incremental version, affecting latency and Throughput
+	- The most striking difference is the fully incremental version’s need to use special hardware:
+		- to achieve a reasonable throughput
+		- Because it must do many random access lookups to resolve queries
+		- It’s practically required to use solid state drives to avoid becoming bottlenecked on disk seeks
+	- The a Lambda Architecture:
+		- It can produce solutions with higher performance in every respect 
+		- It avoids the complexity that plagues fully incremental architecture
+- Lambda Architecture: 
+	- Its main idea is to build Big Data systems as a series of layers
+		- Each layer satisfies a subset of the properties above 
+		- Each layer builds upon the functionality provided by the layers beneath it
+	- Ideally, we could run the functions on the fly: if it were possible, it would take a huge amount of resources to do and would be unreasonably expensive
+	- The most obvious alternative approach is to have 3 layers: Batch layer + Serving layer + Speed layer
+	- The Batch layer:
+		- It stores the master copy of the dataset: immutable and very large
+		- It uses a batch-processing systems (E.g., Hadoop) to precompute batch views on that master dataset = function(all data)
+		- Its batch view is an indexed precomputed view (key [url, day]) that can be accessed with random reads
+		- It's high-latency operation: It's always behind; it won't contain the newest data
+		- Its batch computations are written like single-threaded programs, and we get parallelism for free 
+		- It’s easy to write robust, highly scalable computations on the batch layer 
+		- It scales by adding new machines
+	- The Serving layer:
+		The batch layer emits batch views as the result of its functions. The next step is to load the views somewhere so that they can be queried. This is where the serving layer comes in. The serving layer is a specialized distributed database that loads in a batch view and makes it possible to do random reads on it (see figure 1.9). When new batch views are available, the serving layer automatically swaps those in so that more up-to-date results are available. 
+		A serving layer database supports batch updates and random reads. Most notably, it doesn’t need to support random writes. This is a very important point, as random writes cause most of the complexity in databases. By not supporting random writes, these databases are extremely simple. That simplicity makes them robust, predictable, easy to configure, and easy to operate. ElephantDB, the serving layer database you’ll learn to use in this book, is only a few thousand lines of code.
+
+	- The speed layer: 
+ 
+1.7.3. Batch and serving layers satisfy almost all properties 
+The batch and serving layers support arbitrary queries on an arbitrary dataset with the trade-off that queries will be out of date by a few hours. It takes a new piece of data a few hours to propagate through the batch layer into the serving layer where it can be queried. The important thing to notice is that other than low latency updates, the batch and serving layers satisfy every property desired in a Big Data system, as outlined in section 1.5. Let’s go through them one by one: 
+
+• Robustness and fault tolerance— Hadoop handles failover when machines go down. The serving layer uses replication under the hood to ensure availability when servers go down. The batch and serving layers are also human-fault tolerant, because when a mistake is made, you can fix your algorithm or remove the bad data and recompute the views from scratch. 
+• Scalability— Both the batch and serving layers are easily scalable. They’re both fully distributed systems, and scaling them is as easy as adding new machines. 
+• Generalization— The architecture described is as general as it gets. You can compute and update arbitrary views of an arbitrary dataset. 
+• Extensibility— Adding a new view is as easy as adding a new function of the master dataset. Because the master dataset can contain arbitrary data, new types of data can be easily added. If you want to tweak a view, you don’t have to worry about supporting multiple versions of the view in the application. You can simply recompute the entire view from scratch. 
+• Ad hoc queries— The batch layer supports ad hoc queries innately. All the data is conveniently available in one location. 
+• Minimal maintenance— The main component to maintain in this system is Hadoop. Hadoop requires some administration knowledge, but it’s fairly straightforward to operate. As explained before, the serving layer databases are simple because they don’t do random writes. Because a serving layer database has so few moving parts, there’s lots less that can go wrong. As a consequence, it’s much less likely that anything will go wrong with a serving layer database, so they’re easier to maintain. 
+• Debuggability— You’ll always have the inputs and outputs of computations run on the batch layer. In a traditional database, an output can replace the original input—such as when incrementing a value. In the batch and serving layers, the input is the master dataset and the output is the views. Likewise, you have the inputs and outputs for all the intermediate steps. Having the inputs and outputs gives you all the information you need to debug when something goes wrong. 
+The beauty of the batch and serving layers is that they satisfy almost all the properties you want with a simple and easy-to-understand approach. There are no concurrency issues to deal with, and it scales trivially. The only property missing is low latency updates. The final layer, the speed layer, fixes this problem. 
+1.7.4. Speed layer 
+The serving layer updates whenever the batch layer finishes precomputing a batch view. This means that the only data not represented in the batch view is the data that came in while the precomputation was running. All that’s left to do to have a fully realtime data system—that is, to have arbitrary functions computed on arbitrary data in real time—is to compensate for those last few hours of data. This is the purpose of the speed layer. As its name suggests, its goal is to ensure new data is represented in query functions as quickly as needed for the application requirements (see figure 1.10). 
+Figure 1.10. Speed layer 
+
+
+
+You can think of the speed layer as being similar to the batch layer in that it produces views based on data it receives. One big difference is that the speed layer only looks at recent data, whereas the batch layer looks at all the data at once. Another big difference is that in order to achieve the smallest latencies possible, the speed layer doesn’t look at all the new data at once. Instead, it updates the realtime views as it receives new data instead of recomputing the views from scratch like the batch layer does. The speed layer does incremental computation instead of the recomputation done in the batch layer. 
+We can formalize the data flow on the speed layer with the following equation:
+realtime view = function(realtime view, new data)
+A realtime view is updated based on new data and the existing realtime view.
+The Lambda Architecture in full is summarized by these three equations:
+batch view
+=
+function(all data)
+realtime view
+=
+function(realtime view, new data)
+query
+=
+function(batch view. realtime view)
+A pictorial representation of these ideas is shown in figure 1.11. Instead of resolving queries by just doing a function of the batch view, you resolve queries by looking at both the batch and realtime views and merging the results together. 
+Figure 1.11. Lambda Architecture diagram 
+
+
+
+The speed layer uses databases that support random reads and random writes. Because these databases support random writes, they’re orders of magnitude more complex than the databases you use in the serving layer, both in terms of implementation and operation. 
+The beauty of the Lambda Architecture is that once data makes it through the batch layer into the serving layer, the corresponding results in the realtime views are no longer needed. This means you can discard pieces of the realtime view as they’re no longer needed. This is a wonderful result, because the speed layer is far more complex than the batch and serving layers. This property of the Lambda Architecture is called complexity isolation, meaning that complexity is pushed into a layer whose results are only temporary. If anything ever goes wrong, you can discard the state for the entire speed layer, and everything will be back to normal within a few hours. 
+Let’s continue the example of building a web analytics application that supports queries about the number of pageviews over a range of days. Recall that the batch layer produces batch views from [url, day] to the number of pageviews. 
+The speed layer keeps its own separate view of [url, day] to number of pageviews. Whereas the batch layer recomputes its views by literally counting the pageviews, the speed layer updates its views by incrementing the count in the view whenever it receives new data. To resolve a query, you query both the batch and realtime views as necessary to satisfy the range of dates specified, and you sum up the results to get the final count. There’s a little work that needs to be done to properly synchronize the results, but we’ll cover that in a future chapter. 
+Some algorithms are difficult to compute incrementally. The batch/speed layer split gives you the flexibility to use the exact algorithm on the batch layer and an approximate algorithm on the speed layer. The batch layer repeatedly overrides the speed layer, so the approximation gets corrected and your system exhibits the property of eventual accuracy. Computing unique counts, for example, can be challenging if the sets of uniques get large. It’s easy to do the unique count on the batch layer, because you look at all the data at once, but on the speed layer you might use a HyperLogLog set as an approximation. 
+What you end up with is the best of both worlds of performance and robustness. A system that does the exact computation in the batch layer and an approximate computation in the speed layer exhibits eventual accuracy, because the batch layer corrects what’s computed in the speed layer. You still get low latency updates, but because the speed layer is transient, the complexity of achieving this doesn’t affect the robustness of your results. The transient nature of the speed layer gives you the flexibility to be very aggressive when it comes to making trade-offs for performance. Of course, for computations that can be done exactly in an incremental fashion, the system is fully accurate.
+
 - Recent trends in technology
 
 </details>
