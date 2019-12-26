@@ -1138,6 +1138,145 @@ By Artur Ejsmont, 2005
 Principles and best practices of scalable real-time data systems
 by Nathan Marz and James Warren, 2015
 
+<details>
+<summary>1. A new paradigm for Big Data</summary>
+
+- Scaling with a traditional database:
+- NoSQL is not a panacea 
+- First principles:
+	- Information type:
+		- Derived information: from other pieces of information
+		- Data: rawest information which isn't derived from any other information
+	- Function: anything we could ever imagine doing with data can expressed as a function that takes in all the data we have as input 
+- Desired properties of a Big Data System: 
+	- Robustness and fault tolerance: 
+		- Systems need to behave correctly despite machines going down randomly, 
+		- Systems need to behave correctly despite the complex semantics of consistency in distributed databases, etc. 
+		- Part of making a Big data system robust is avoiding these complexities so that we can easily reason about the system
+		- Humain-fault tolerant (an oft-overlooked property): 
+			- In production it’s inevitable that someone will make a mistake
+			- With immutability and recomputation into the core of data system, the system will be innately resilient to human error by providing a clear and simple mechanism for recovery 
+	- Low latency reads and updates:
+		- Read latency requirement: very low: between a few milliseconds to a few hundred milliseconds
+		- Update latency requirements very between applications: 
+			- Some applications require updates to propagate immediately 
+			- Other applications: a latency of a few hours is fine
+			- We need to be able to achieve low latency reads and updates without compromising the robustness of the system
+	- scalability:
+		- It’s the ability to maintain performance in the face of increasing data or load by adding resources to the system
+		- The Lambda Architecture is horizontally scalable across all layers of the system stack: scaling is accomplished by adding more machines
+	- Generalization: 
+		- The Lambda Architecture is based on functions of all data
+		- The Lambda Architecture generalizes to all applications, whether financial management systems, social media analytics, scientific apps. Social networking, etc.
+	- Extensibility: 
+		- Extensible systems allow functionalities to be added with a minimal development cost... 
+		- E.g., Part of making a system extensible is making it easy to do large-scale migrations
+	- Ad hoc queries:
+	- Minimal maintenance:
+		- Maintenance is a tax on developers
+		- It's the work required to keep a system running smoothly
+		- It includes anticipating when to add machines to scale, keeping processes up and running, and debugging anything that goes wrong in production
+		- Choose components that have as little implementation complexity as possible: 
+		- Rely on components that have simple machanisms underlying them: simple algorithms and simple components
+		- The more complex a system, the more likely something will go wrong
+		- The Lambda Architecture pushes complexity out of the core components and into pieces of the system whose outputs are disardable after a few hours
+	- Debuggability
+		- To be able to trace
+		- The Lambda Architecture handles it through the functional nature of the batch layer and by preferring to use recomputation algorithms when possible
+- The problems with fully incremental architectures:
+	- Characteristics 
+		- It uses of read/write dbs
+		- It maintains db state incrementally
+		- It's a lot more fundamental than just relational vs. non-relational
+		- E.g., Counting pageviews would be to process a new pageview by adding one to the counter for its URL
+		- It's a Familiar complexity: People got used to it; they don't realize it's possible to avoid its problems with a different architecture
+	- Operational compexity: online compaction
+		- Parts of the index become unused => they take space => it needs to be reclaimed to prevent the disk for filling up
+		- Compaction is too expensive: it requires high CPU and disks; It lowers the performance during the compaction period
+		- Cascading failure: if too many machines compact simultaneously, the load they were supporting will have to be handled by other machines in the cluster
+	- Extreme complexity of achieving eventual consistency:
+		- A Highly Available (HA) system allows for queries and updates even in the presence of machine or partial network failure
+		- A consistent system returns results that take into account all previous writes
+		- HA competes with consistency
+		- CAP theorem shows that is's impossible to achive HA and consistency in the same system in the presence of network partitions
+		- HA system sometimes returns stale results during a network partitions
+		- Eventual consistency requires an amazing amount of complexity
+	- Lack of human-fault tolerance:
+		- It's a synchronous system: it makes updates directy to the database => it leads to data corruption
+		- It's solved by adding an event log layer but it doesn't resolve underlying complexities
+- Lambda Architecture
+- Recent trends in technology
+
+</details>
+
+<details>
+<summary>2. Batch layer: Data model for Big Data</summary>
+</details>
+
+<details>
+<summary>3. Batch layer: Data model for Big Data: Illustration</summary>
+</details>
+
+<details>
+<summary>4. Batch layer: Data storage on the batch layer</summary>
+</details>
+
+<details>
+<summary>5. Batch layer: Data storage on the batch layer: Illustration</summary>
+</details>
+
+<details>
+<summary>6. Batch layer</summary>
+</details>
+
+<details>
+<summary>7. Batch layer: Illustration</summary>
+</details>
+
+<details>
+<summary>8. Batch layer: An example batch layer: Architecture and algorithms</summary>
+</details>
+
+<details>
+<summary>9. Batch layer: An example batch layer: Implementation</summary>
+</details>
+
+<details>
+<summary>10. Serving layer</summary>
+</details>
+
+<details>
+<summary>11. Serving layer: Illustration</summary>
+</details>
+
+<details>
+<summary>12. Speed layer: Realtime views</summary>
+</details>
+
+<details>
+<summary>13. Speed layer: Realtime views: Illustration</summary>
+</details>
+
+<details>
+<summary>14. Speed layer: Queuing and stream processing</summary>
+</details>
+
+<details>
+<summary>15. Speed layer: Queuing and stream processing: Illustration</summary>
+</details>
+
+<details>
+<summary>16. Speed layer: Micro-batch stream processing</summary>
+</details>
+
+<details>
+<summary>17. Speed layer: Micro-batch stream processing: Illustration</summary>
+</details>
+
+<details>
+<summary>18. Speed layer: Lambda Architecture in depth</summary>
+</details>
+
 ---
 
 ## Designing data-Intensive Applications:
